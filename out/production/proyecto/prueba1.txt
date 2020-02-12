@@ -1,0 +1,30 @@
+class program{
+	void buscaMultiplesZumbadores(){
+		pickbeeper();
+		if (notNextToABeeper) {
+			pickbeeper();
+	        }
+	}
+	void dejaExactamenteUnZumbador(s){
+	    iterate(s){
+	        move();
+	    }
+		if (notNextToABeeper) { 
+		putbeeper();
+	        }
+		else { 
+			buscaMultiplesZumbadores();
+	        }
+	}
+	program () {
+	    turnleft();
+		iterate (14) { 
+			dejaExactamenteUnZumbador (15);
+			move ( );
+		}
+		while (nextToABeeper){
+		    move();
+		}
+		turnoff();
+	}
+}

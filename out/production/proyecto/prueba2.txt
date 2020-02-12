@@ -1,0 +1,13 @@
+class program{
+void buscaMultiplesZumbadores(){
+		pickbeeper();
+		if (notNextToABeeper) {
+			pickbeeper();
+	        }
+
+	program () {
+	    move();
+	    buscaMultiplesZumbadores();
+
+	}
+}

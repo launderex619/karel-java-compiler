@@ -1,0 +1,477 @@
+//hecho por Carlos Carvajal Vázquez
+/*===========Primera area: Codigo de usuario===========*/
+//paquetes------------
+package Parser;
+import Tokens.Token;
+import Tokens.TokenError;
+import Tokens.Nodo;
+import java_cup.runtime.Symbol;
+import java.util.*;
+
+
+//Codigo para el parser, Variables, Metodos---------------->
+parser code{:
+    public ArrayList<Token> Tokens = new ArrayList<>();
+    public ArrayList<TokenError> tokenErrores = new ArrayList<>();
+    public int contadorNodos = 0;
+    public static Nodo raiz;
+
+    //metodo que se llama automaticamente ante algun error sintactico:
+    public void syntax_error(Symbol s){
+        String lexema = s.value.toString();
+        int fila = s.right;
+        int columna = s.left;
+
+        System.out.print("Error Sintactico: " + lexema + " Simbolo no existe en el lenguaje\nLinea: " + fila + " Columna: " + columna);
+        tokenErrores.add(new TokenError(lexema, "Error lexico", "Simbolo no existe en el lenguaje", fila, columna));
+    }
+    
+    //metodo que se llama automaticamente ante algun error del que no es posible recuperarse:
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        String lexema = s.value.toString();
+        int fila = s.right;
+        int columna = s.left;
+
+        System.out.print("Error Sintactico, PANIC MODE: " + lexema + " Simbolo no existe en el lenguaje\nLinea: " + fila + " Columna: " + columna);
+        tokenErrores.add(new TokenError(lexema, "Error lexico", "Simbolo no existe en el lenguaje", fila, columna));    
+    }
+:}
+//Codigo para las acciones gramaticales----------->
+action code{:
+:}
+
+
+/*===========Segunda area: Declaraciones===========*/
+//declaracion de teminales-------------->
+terminal llaveA, llaveC, parenA, parenC, finIns, negacion;
+terminal clas, progra, iszero, iff, els, whil, iterate, ret, operacion, definicionDeMetodo, operador, instruccion, funcionBooleana, identificador, decimal; // cadena ,digito;
+
+//declaracion de no terminales---------->
+non terminal DECLARACION_DEL_PROGRAMA, DECLARACION_DE_METODO, FIRMA_DE_METODO, PARAMETRO_OPCIONAL,
+    ARGUMENTO_VACIO, ARGUMENTO_OPCIONAL, EXPRESION, EXPRESIONES, BLOQUE, EXPRESION_DE_LLAMADA, EXPRESION_GENERICA,
+    EXPRESION_ENTERA, TERMINO, CLAUSULA_Y, CLAUSULA_NO, CLAUSULA_ATOMICA, EXPRESION_IF, EXPRESION_WHILE,
+    EXPRESION_ITERATE, EXPRESION_RETURN, INICIO_PROGRAMA, INICIO, FIN, DECLARACION_DE_METODO_e;
+
+//declaracion de precedencias----------->
+precedence left els, iff;
+precedence left operador;
+
+start with DECLARACION_DEL_PROGRAMA;
+
+/*===========Tercera area: Reglas semanticas===========*/
+DECLARACION_DEL_PROGRAMA    ::= INICIO_PROGRAMA:ini{:
+                                                    System.out.print("Inicio del programa");
+                                                    Nodo n = new Nodo();
+                                                    n.setEtiqueta("DECLARACION_DEL_PROGRAMA");
+                                                    n.setIdNodo(parser.contadorNodos++);
+                                                    n.addHijo((Nodo) ini);
+                                                    parser.raiz = (Nodo) n;
+                                                    RESULT = n;
+                                                    :}
+                                ;
+INICIO_PROGRAMA             ::= clas:cl progra:pr llaveA:ll INICIO:ini llaveC:lll{:
+                                                            System.out.print("Inicio programa");
+                                                            Nodo n = new Nodo();
+                                                            Nodo c[] = new Nodo[4];
+                                                            c[0] = new Nodo();c[1] = new Nodo();c[2] = new Nodo();c[3] = new Nodo();
+                                                            n.setEtiqueta("INICIO PROGRAMA");
+                                                            c[0].setValor(cl.toString());
+                                                            c[1].setValor(pr.toString());
+                                                            c[2].setValor(ll.toString());
+                                                            c[3].setValor(lll.toString());
+                                                            c[0].setIdNodo(parser.contadorNodos++);
+                                                            c[1].setIdNodo(parser.contadorNodos++);
+                                                            c[2].setIdNodo(parser.contadorNodos++);
+                                                            c[3].setIdNodo(parser.contadorNodos++);
+                                                            n.setIdNodo(parser.contadorNodos++);
+                                                            n.addHijo(c[0]);
+                                                            n.addHijo(c[1]);
+                                                            n.addHijo(c[2]);
+                                                            n.addHijo((Nodo) ini);
+                                                            n.addHijo(c[3]);
+                                                            RESULT = n;
+                                                            :}
+                                ;
+INICIO                      ::= DECLARACION_DE_METODO:dec FIN:fin {:
+                                                                      System.out.print("Inicio");
+                                                                      Nodo n = new Nodo();
+                                                                      n.setEtiqueta("INICIO");
+                                                                      n.setIdNodo(parser.contadorNodos++);
+                                                                      n.addHijo((Nodo) dec);
+                                                                      n.addHijo((Nodo) fin);
+                                                                      RESULT = n;
+                                                                      :}
+                                | FIN:fin{:
+                                             System.out.print("Inicio");
+                                             Nodo n = new Nodo();
+                                             n.setEtiqueta("INICIO");
+                                             n.setIdNodo(parser.contadorNodos++);
+                                             n.addHijo((Nodo) fin);
+                                             RESULT = n;
+                                             :}
+                                ;
+FIN                         ::= progra:pr ARGUMENTO_VACIO:argVac BLOQUE:bloq {:
+                                                                                  System.out.print("FIN");
+                                                                                  Nodo n = new Nodo();
+                                                                                  Nodo pro = new Nodo();
+                                                                                  pro.setValor(pr.toString());
+                                                                                  pro.setIdNodo(parser.contadorNodos++);
+                                                                                  n.setEtiqueta("FIN");
+                                                                                  n.setIdNodo(parser.contadorNodos++);
+                                                                                  n.addHijo(pro);
+                                                                                  n.addHijo((Nodo) argVac);
+                                                                                  n.addHijo((Nodo) bloq);
+                                                                                  RESULT = n;
+                                                                                  :}
+                                ;
+DECLARACION_DE_METODO       ::= definicionDeMetodo:defM FIRMA_DE_METODO:firMet BLOQUE:bloq DECLARACION_DE_METODO_e:metE{:
+                                                                                System.out.print("Declaracion de metodo");
+                                                                                Nodo n = new Nodo();
+                                                                                Nodo def = new Nodo(); def.setValor(defM.toString());
+                                                                                def.setIdNodo(parser.contadorNodos++);
+                                                                                n.setEtiqueta("Declaracion de metodo");
+                                                                                n.setIdNodo(parser.contadorNodos++);
+                                                                                n.addHijo( def);
+                                                                                n.addHijo((Nodo) firMet);
+                                                                                n.addHijo((Nodo) bloq);
+                                                                                n.addHijo((Nodo) metE);
+                                                                                RESULT = n;
+                                                                                :}
+                                ;
+DECLARACION_DE_METODO_e     ::= DECLARACION_DE_METODO:decMet{:
+                                                             System.out.print("Declaracion de metodo e");
+                                                             Nodo n = new Nodo();
+                                                             n.setEtiqueta("Declaracion de metodo_e");
+                                                             n.setIdNodo(parser.contadorNodos++);
+                                                             n.addHijo((Nodo) decMet);
+                                                             RESULT = n;
+                                                             :}
+                                | {:
+                                   System.out.print("Declaracion de metodo e");
+                                   Nodo n = new Nodo();
+                                   n.setEtiqueta("Declaracion de metodo_e nulo");
+                                   n.setIdNodo(parser.contadorNodos++);
+                                   n.setValor("vacio");
+                                   RESULT = n;
+                                   :}
+                                ;
+FIRMA_DE_METODO             ::= identificador:id PARAMETRO_OPCIONAL:parOpt{:
+                                                                           System.out.print("Firma de metodo");
+                                                                           Nodo n = new Nodo();
+                                                                           n.setEtiqueta("Firma de metodo");
+                                                                           n.setIdNodo(parser.contadorNodos++);
+                                                                           n.setValor(id.toString());
+                                                                           n.addHijo((Nodo) parOpt);
+                                                                           RESULT = n;
+                                                                           :}
+                                ;
+PARAMETRO_OPCIONAL          ::= parenA identificador:id parenC {:
+                                                                System.out.print("Parametro opcional");
+                                                                Nodo n = new Nodo();
+                                                                n.setEtiqueta("Parametro opcional");
+                                                                n.setIdNodo(parser.contadorNodos++);
+                                                                n.setValor(id.toString());
+                                                                RESULT = n;
+                                                                :}
+                                | ARGUMENTO_VACIO:argVac{:
+                                                               System.out.print("Parametro opcional");
+                                                               Nodo n = new Nodo();
+                                                               n.setEtiqueta("Parametro opcional");
+                                                               n.setIdNodo(parser.contadorNodos++);
+                                                               n.addHijo((Nodo) argVac);
+                                                               RESULT = n;
+                                                               :}
+                                ;
+ARGUMENTO_VACIO             ::= parenA parenC {:
+                                              System.out.print("argumento vacio");
+                                              Nodo n = new Nodo();
+                                              n.setEtiqueta("Argumento vacio");
+                                              n.setIdNodo(parser.contadorNodos++);
+                                              n.setValor("()");
+                                              RESULT = n;
+                                              :};
+ARGUMENTO_OPCIONAL          ::= ARGUMENTO_VACIO:argVac {:
+                                                           System.out.print("argumento opt");
+                                                           Nodo n = new Nodo();
+                                                           n.setEtiqueta("Argumento opcional");
+                                                           n.setIdNodo(parser.contadorNodos++);
+                                                           n.addHijo((Nodo) argVac);
+                                                           RESULT = n;
+                                                           :}
+                                | parenA decimal:id parenC {:
+                                                                 System.out.print("argumento opt");
+                                                                 Nodo n = new Nodo();
+                                                                 n.setEtiqueta("Argumento opcional");
+                                                                 n.setIdNodo(parser.contadorNodos++);
+                                                                 n.setValor(id.toString());
+                                                                 RESULT = n;
+                                                                 :}
+                                ;
+EXPRESION                   ::= BLOQUE:bloq {:
+                                            Nodo n = new Nodo();
+                                            n.setEtiqueta("Expresion");
+                                            n.setIdNodo(parser.contadorNodos++);
+                                            n.addHijo((Nodo) bloq);
+                                            RESULT = n;
+                                            :}
+                                | finIns
+                                | EXPRESION_IF:iff{:
+                                                 Nodo n = new Nodo();
+                                                 n.setEtiqueta("Expresion");
+                                                 n.setIdNodo(parser.contadorNodos++);
+                                                 n.addHijo((Nodo) iff);
+                                                 RESULT = n;
+                                                 :}
+                                | EXPRESION_WHILE:whil {:
+                                                       Nodo n = new Nodo();
+                                                       n.setEtiqueta("Expresion");
+                                                       n.setIdNodo(parser.contadorNodos++);
+                                                       n.addHijo((Nodo) whil);
+                                                       RESULT = n;
+                                                       :}
+                                | EXPRESION_ITERATE:it {:
+                                                          Nodo n = new Nodo();
+                                                          n.setEtiqueta("Expresion");
+                                                          n.setIdNodo(parser.contadorNodos++);
+                                                          n.addHijo((Nodo) it);
+                                                          RESULT = n;
+                                                          :}
+                                | EXPRESION_GENERICA:gen {:
+                                                            Nodo n = new Nodo();
+                                                            n.setEtiqueta("Expresion");
+                                                            n.setIdNodo(parser.contadorNodos++);
+                                                            n.addHijo((Nodo) gen);
+                                                            RESULT = n;
+                                                            :}
+                                | EXPRESION_RETURN:ret {:
+                                                          Nodo n = new Nodo();
+                                                          n.setEtiqueta("Expresion");
+                                                          n.setIdNodo(parser.contadorNodos++);
+                                                          n.addHijo((Nodo) ret);
+                                                          RESULT = n;
+                                                          :}
+                                | EXPRESION_DE_LLAMADA:call {:
+                                                               Nodo n = new Nodo();
+                                                               n.setEtiqueta("Expresion");
+                                                               n.setIdNodo(parser.contadorNodos++);
+                                                               n.addHijo((Nodo) call);
+                                                               RESULT = n;
+                                                               :}
+                                ;
+BLOQUE                      ::= llaveA:lla EXPRESIONES:expr llaveC:llc {:
+                                                                Nodo n = new Nodo();
+                                                                Nodo n1 = new Nodo(); n1.setEtiqueta(lla.toString()); n1.setIdNodo(parser.contadorNodos++);
+                                                                Nodo n2 = new Nodo(); n2.setEtiqueta(llc.toString()); n2.setIdNodo(parser.contadorNodos++);
+                                                                n.setEtiqueta("Bloque");
+                                                                n.setIdNodo(parser.contadorNodos++);
+                                                                n.addHijo(n1);
+                                                                n.addHijo((Nodo) expr);
+                                                                n.addHijo(n2);
+                                                                RESULT = n;
+                                                                :}
+                                | llaveA llaveC {:
+                                                   Nodo n = new Nodo();
+                                                   n.setEtiqueta("Bloque");
+                                                   n.setIdNodo(parser.contadorNodos++);
+                                                   n.setValor("Vacio");
+                                                   RESULT = n;
+                                                   :}
+                                ;
+
+EXPRESIONES                 ::= EXPRESION:expr EXPRESIONES:expres {:
+                                                    Nodo n = new Nodo();
+                                                    n.setEtiqueta("Expresiones");
+                                                    n.setIdNodo(parser.contadorNodos++);
+                                                    n.addHijo((Nodo) expr);
+                                                    n.addHijo((Nodo) expres);
+                                                    RESULT = n;
+                                                    :}
+                                | EXPRESION:expr {:
+                                                    Nodo n = new Nodo();
+                                                    n.setEtiqueta("Expresiones");
+                                                    n.setIdNodo(parser.contadorNodos++);
+                                                    n.addHijo((Nodo) expr);
+                                                    RESULT = n;
+                                                    :}
+                                ;
+
+EXPRESION_DE_LLAMADA        ::= identificador:id ARGUMENTO_OPCIONAL:argOpt finIns {:
+                                                                                 Nodo n = new Nodo();
+                                                                                 n.setEtiqueta("Expresion de llamada");
+                                                                                 n.setIdNodo(parser.contadorNodos++);
+                                                                                 n.setValor(id.toString());
+                                                                                 n.addHijo((Nodo) argOpt);
+                                                                                 RESULT = n;
+                                                                                 :}
+                                ;
+EXPRESION_ENTERA            ::= decimal:dec {:
+                                           Nodo n = new Nodo();
+                                           n.setEtiqueta("Expresion entera");
+                                           n.setIdNodo(parser.contadorNodos++);
+                                           n.setValor(dec.toString());
+                                           RESULT = n;
+                                           :}
+                                | identificador:id {:
+                                                      Nodo n = new Nodo();
+                                                      n.setEtiqueta("Expresion entera");
+                                                      n.setIdNodo(parser.contadorNodos++);
+                                                      n.setValor(id.toString());
+                                                      RESULT = n;
+                                                      :}
+                                | operacion:op parenA EXPRESION_ENTERA:exprEnt parenC {:
+                                                                                        Nodo n = new Nodo();
+                                                                                        n.setEtiqueta("Expresion entera");
+                                                                                        n.setIdNodo(parser.contadorNodos++);
+                                                                                        n.setValor(op.toString());
+                                                                                        n.addHijo((Nodo) exprEnt);
+                                                                                        RESULT = n;
+                                                                                        :}
+                                ;
+TERMINO                     ::= CLAUSULA_Y:y operador:op TERMINO:term {:
+                                                                        Nodo n = new Nodo();
+                                                                        n.setEtiqueta("Termino");
+                                                                        n.setIdNodo(parser.contadorNodos++);
+                                                                        n.addHijo((Nodo) y);
+                                                                        n.setValor(op.toString());
+                                                                        n.addHijo((Nodo) term);
+                                                                        RESULT = n;
+                                                                        :}
+                                | CLAUSULA_Y:y {:
+                                                Nodo n = new Nodo();
+                                                n.setEtiqueta("Termino");
+                                                n.setIdNodo(parser.contadorNodos++);
+                                                n.addHijo((Nodo) y);
+                                                RESULT = n;
+                                                :}
+                                ;
+CLAUSULA_Y                  ::= CLAUSULA_NO:no operador:op CLAUSULA_Y:y {:
+                                                                            Nodo n = new Nodo();
+                                                                            n.setEtiqueta("Clausula Y");
+                                                                            n.setIdNodo(parser.contadorNodos++);
+                                                                            n.addHijo((Nodo) no);
+                                                                            n.setValor(op.toString());
+                                                                            n.addHijo((Nodo) y);
+                                                                            RESULT = n;
+                                                                            :}
+                                | CLAUSULA_NO:no {:
+                                                     Nodo n = new Nodo();
+                                                     n.setEtiqueta("Clausula Y");
+                                                     n.setIdNodo(parser.contadorNodos++);
+                                                     n.addHijo((Nodo) no);
+                                                     RESULT = n;
+                                                     :}
+                                ;
+CLAUSULA_NO                 ::= negacion:neg CLAUSULA_ATOMICA:atom {:
+                                                                   Nodo n = new Nodo();
+                                                                   n.setEtiqueta("Clausula No");
+                                                                   n.setIdNodo(parser.contadorNodos++);
+                                                                   n.setValor(neg.toString());
+                                                                   n.addHijo((Nodo) atom);
+                                                                   RESULT = n;
+                                                                   :}
+                                | CLAUSULA_ATOMICA:atom {:
+                                                           Nodo n = new Nodo();
+                                                           n.setEtiqueta("Clausula No");
+                                                           n.setIdNodo(parser.contadorNodos++);
+                                                           n.addHijo((Nodo) atom);
+                                                           RESULT = n;
+                                                           :}
+                                ;
+CLAUSULA_ATOMICA            ::= iszero:isZ parenA EXPRESION_ENTERA:exprEnt parenC {:
+                                                                                  Nodo n = new Nodo();
+                                                                                  n.setEtiqueta("Clausula atomica");
+                                                                                  n.setIdNodo(parser.contadorNodos++);
+                                                                                  n.setValor(isZ.toString());
+                                                                                  n.addHijo((Nodo) exprEnt);
+                                                                                  RESULT = n;
+                                                                                  :}
+                                | funcionBooleana:funcBol {:
+                                                          Nodo n = new Nodo();
+                                                          n.setEtiqueta("Clausula atomica");
+                                                          n.setIdNodo(parser.contadorNodos++);
+                                                          n.setValor(funcBol.toString());
+                                                          RESULT = n;
+                                                          :}
+                                | ARGUMENTO_VACIO:argVac {:
+                                                         Nodo n = new Nodo();
+                                                         n.setEtiqueta("Clausula atomica");
+                                                         n.setIdNodo(parser.contadorNodos++);
+                                                         n.addHijo((Nodo) argVac);
+                                                         RESULT = n;
+                                                         :}
+                                | parenA TERMINO:term parenC {:
+                                                             Nodo n = new Nodo();
+                                                             n.setEtiqueta("Clausula atomica");
+                                                             n.setIdNodo(parser.contadorNodos++);
+                                                             n.addHijo((Nodo) term);
+                                                             RESULT = n;
+                                                             :}
+                                ;
+EXPRESION_IF                ::= iff parenA TERMINO:term parenC EXPRESION:expr {:
+                                                                           Nodo n = new Nodo();
+                                                                           n.setEtiqueta("Expresion if");
+                                                                           n.setIdNodo(parser.contadorNodos++);
+                                                                           n.setValor((Math.random() < .5)? "true" : "false" );
+                                                                           n.addHijo((Nodo) term);
+                                                                           n.addHijo((Nodo) expr);
+                                                                           RESULT = n;
+                                                                           :}
+                                | iff parenA TERMINO:term parenC EXPRESION:expr1 els EXPRESION:expr2{:
+                                                                   Nodo n = new Nodo();
+                                                                   n.setEtiqueta("Expresion if");
+                                                                   n.setIdNodo(parser.contadorNodos++);
+                                                                   n.setValor((Math.random() < .5)? "true" : "false" );
+                                                                   n.addHijo((Nodo) term);
+                                                                   n.addHijo((Nodo) expr1);
+                                                                   n.addHijo((Nodo) expr2);
+                                                                   n.getHijos().get(2).setEtiqueta("Expresion else");
+                                                                   n.getHijos().get(2).setValor("else");
+                                                                   RESULT = n;
+                                                                   :}
+                                ;
+EXPRESION_WHILE             ::= whil parenA TERMINO:term parenC EXPRESION:expr {:
+                                                                  Nodo n = new Nodo();
+                                                                  n.setEtiqueta("Expresion while");
+                                                                  n.setValor( "" + (int)(Math.random() * 10));
+                                                                  n.setIdNodo(parser.contadorNodos++);
+                                                                  n.addHijo((Nodo) term);
+                                                                  n.addHijo((Nodo) expr);
+                                                                  RESULT = n;
+                                                                  :}
+                                ;
+EXPRESION_ITERATE           ::= iterate parenA EXPRESION_ENTERA:dec parenC EXPRESION:expr {:
+                                                                             Nodo n = new Nodo();
+                                                                             n.setEtiqueta("Expresion iterate");
+                                                                             n.setValor("iterate");
+                                                                             n.setIdNodo(parser.contadorNodos++);
+                                                                             n.addHijo((Nodo) dec);
+                                                                             n.addHijo((Nodo) expr);
+                                                                             RESULT = n;
+                                                                             :}
+                                ;                                
+EXPRESION_GENERICA          ::= instruccion:inst ARGUMENTO_VACIO:vac finIns:fins {:
+                                                                   Nodo n = new Nodo();
+                                                                   Nodo n1 = new Nodo();
+                                                                   Nodo n2 = new Nodo();
+                                                                   n1.setValor(inst.toString());
+                                                                   n2.setValor(fins.toString());
+                                                                   n1.setIdNodo(parser.contadorNodos++);
+                                                                   n2.setIdNodo(parser.contadorNodos++);
+                                                                   n.setEtiqueta("Expresion generica");
+                                                                   n.setIdNodo(parser.contadorNodos++);
+                                                                   n.setValor(inst.toString());
+                                                                   n.addHijo(n1);
+                                                                   n.addHijo((Nodo) vac);
+                                                                   n.addHijo(n2);
+                                                                   RESULT = n;
+                                                                   :}
+                                ;
+EXPRESION_RETURN            ::= ret:re ARGUMENTO_VACIO:vac finIns {:
+                                                                 Nodo n = new Nodo();
+                                                                 n.setEtiqueta("Expresion return");
+                                                                 n.setIdNodo(parser.contadorNodos++);
+                                                                 n.setValor(re.toString());
+                                                                 n.addHijo((Nodo) vac);
+                                                                 RESULT = n;
+                                                                 :}
+                                ;
